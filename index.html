@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fff7ee">
+<meta name="color-scheme" content="light">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Dojo">
+<title>Dojo de Karate — aprende jugando</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥋</text></svg>">
+<style>
+  /* Friendly modern look: warm cream + coral + mint. Fully offline, no external assets.
+     Mobile-first: the base styles below are the phone layout; the desktop two-column
+     layout starts at the `min-width: 761px` block near the end of this sheet. */
+  :root {
+    --coral: #ff7d6b; --coral-dark: #f0604d;
+    --teal: #3ec6b0; --sun: #ffc94d; --lav: #9b7ede;
+    --ink: #4a4458; --ink-soft: #8b8299;
+    --cream: #fffaf3; --line: #f2e6d9;
+    --round: 'Arial Rounded MT Bold', 'Hiragino Maru Gothic ProN', 'Trebuchet MS', sans-serif;
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-l: env(safe-area-inset-left, 0px);
+    --safe-r: env(safe-area-inset-right, 0px);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html {
+    -webkit-text-size-adjust: 100%; text-size-adjust: 100%;
+    overscroll-behavior-y: contain;   /* no pull-to-refresh mid-session */
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(160deg, #fff7ee 0%, #ffefe6 45%, #eafaf4 100%);
+    background-attachment: fixed;
+    min-height: 100vh; min-height: 100dvh; color: var(--ink);
+    -webkit-tap-highlight-color: transparent;
+  }
+  button {
+    font-family: inherit; touch-action: manipulation;
+    -webkit-user-select: none; user-select: none;
+  }
+  .app {
+    max-width: 1000px; margin: 0 auto;
+    padding: 14px calc(12px + var(--safe-r)) 24px calc(12px + var(--safe-l));
+  }
+  /* Room for the thumb-reachable Next button that floats while feedback is shown. */
+  body.answered .app { padding-bottom: calc(88px + var(--safe-b)); }
+
+  header.top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .brand svg { width: 40px; height: 40px; flex: none; }
+  .brand h1 { font-family: var(--round); font-size: 20px; letter-spacing: .3px; }
+  .brand .tagline { font-size: 12px; color: var(--ink-soft); }
+  .top-actions { display: flex; gap: 8px; flex: none; }
+  .icon-btn {
+    width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line);
+    background: #fff; font-size: 18px; cursor: pointer;
+    box-shadow: 0 3px 10px rgba(200,150,110,.12); transition: .15s;
+  }
+  .icon-btn:active { transform: scale(.93); }
+
+  .layout { display: flex; flex-direction: column; gap: 14px; }
+  aside.belts { order: 2; }
+  aside.belts h3 { font-family: var(--round); font-size: 14px; margin-bottom: 2px; }
+  aside.belts .hint { font-size: 11.5px; color: var(--ink-soft); margin-bottom: 10px; }
+  #belt-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 8px; }
+  .belt-card {
+    background: #fff; border-radius: 14px; padding: 10px 11px;
+    cursor: pointer; border: 2px solid transparent; transition: .15s;
+    box-shadow: 0 2px 10px rgba(180,140,100,.08);
+    display: flex; align-items: center; gap: 9px; min-height: 54px;
+  }
+  .belt-card:active { transform: scale(.98); }
+  .belt-card.active { border-color: var(--coral); }
+  .belt-dot { width: 15px; height: 15px; border-radius: 6px; border: 2px solid rgba(0,0,0,.14); flex: none; }
+  .belt-body { flex: 1; min-width: 0; }
+  .belt-name { font-size: 12.5px; font-weight: 700; }
+  .belt-cat { font-size: 10.5px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .belt-bar { height: 6px; border-radius: 99px; background: #f4ece2; margin-top: 4px; overflow: hidden; }
+  .belt-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #57d3ba, #35b39c); }
+  .belt-frac { font-size: 10.5px; color: var(--ink-soft); flex: none; }
+
+  main.panel {
+    order: 1; min-width: 0; background: #fff; border-radius: 22px; padding: 16px 14px;
+    box-shadow: 0 10px 30px rgba(230,150,110,.14);
+  }
+  [hidden] { display: none !important; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px; border-radius: 999px;
+    padding: 5px 13px; font-size: 12.5px; font-weight: 700;
+    background: #fff4ec; color: #b0755a;
+  }
+  .pill.score  { background: #fff1cf; color: #a97b13; }
+  .pill.streak { background: #ffe7e0; color: #e0532f; }
+  .quiz-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .quiz-head .spacer { flex: 1; }
+
+  .art {
+    background: var(--cream); border: 2px solid var(--line); border-radius: 18px;
+    aspect-ratio: 200 / 130; max-height: 30dvh; min-height: 110px;
+    margin-top: 12px; display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .art svg { width: 100%; height: 100%; }
+
+  .q-text { font-size: 17px; font-weight: 700; margin: 14px 0 13px; }
+  .chip {
+    display: inline-block; background: #f0eaff; color: #7c63c9; border-radius: 999px;
+    font-size: 11px; font-weight: 700; padding: 3px 10px; margin-left: 8px; vertical-align: middle;
+  }
+  .options { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .opt {
+    background: #fff; border: 2.5px solid #f0e2d4; border-radius: 16px; padding: 15px 16px;
+    font-size: 16px; font-weight: 600; color: var(--ink); cursor: pointer; text-align: left;
+    font-family: inherit; transition: .12s; min-height: 54px;   /* comfortable thumb target */
+  }
+  .opt:active:not(:disabled) { transform: scale(.985); border-color: var(--coral); }
+  .opt:disabled { cursor: default; }
+  .opt:disabled:not(.correct):not(.wrong) { opacity: .45; }
+  .opt.correct { background: #48c479 !important; border-color: #48c479 !important; color: #fff !important; }
+  .opt.wrong   { background: #ff7b6e !important; border-color: #ff7b6e !important; color: #fff !important; }
+
+  .feedback {
+    margin-top: 12px; border-radius: 16px; padding: 13px 14px;
+    display: flex; flex-direction: column; gap: 12px; align-items: stretch;
+  }
+  .feedback.ok  { background: #e9f9ef; border: 2px solid #bfe9cd; }
+  .feedback.bad { background: #ffefec; border: 2px solid #ffd0c7; }
+  .feedback .note { font-size: 14.5px; line-height: 1.55; }
+  .feedback .kanji { font-family: 'Hiragino Maru Gothic ProN', 'Hiragino Mincho ProN', serif; }
+
+  .next-btn {
+    background: linear-gradient(135deg, #ff8a75, #ff6f61); color: #fff; border: none;
+    border-radius: 999px; padding: 15px 24px; font-size: 16px; font-weight: 800;
+    font-family: var(--round); cursor: pointer; transition: .12s;
+    box-shadow: 0 6px 14px rgba(255,111,97,.35);
+  }
+  .next-btn:active { transform: scale(.98); }
+  /* On the phone the Next button floats where the thumb already is. */
+  .feedback .next-btn {
+    position: fixed; z-index: 30;
+    left: calc(12px + var(--safe-l)); right: calc(12px + var(--safe-r));
+    bottom: calc(12px + var(--safe-b));
+    box-shadow: 0 8px 24px rgba(255,111,97,.45);
+  }
+  .ghost-btn {
+    background: #fff; color: var(--coral-dark); border: 2.5px solid #ffd0c7;
+    border-radius: 999px; padding: 13px 22px; font-size: 15px; font-weight: 800;
+    font-family: var(--round); cursor: pointer; transition: .12s;
+  }
+  .ghost-btn:active { transform: scale(.98); border-color: var(--coral); }
+
+  .menu-title { font-family: var(--round); font-size: 22px; margin-bottom: 4px; }
+  .menu-sub { font-size: 14px; color: var(--ink-soft); margin-bottom: 14px; line-height: 1.5; }
+  .menu-stats {
+    background: var(--cream); border: 2px solid var(--line); border-radius: 16px;
+    padding: 12px 14px; font-size: 13.5px; line-height: 1.6; margin-bottom: 16px;
+  }
+  .big-btn {
+    display: block; width: 100%; border: none; border-radius: 18px; padding: 15px 18px;
+    text-align: left; color: #fff; cursor: pointer; margin-bottom: 11px; min-height: 66px;
+    font-family: var(--round); font-size: 16px; transition: .15s;
+  }
+  .big-btn .sub { display: block; font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 12.5px; font-weight: 500; opacity: .92; margin-top: 3px; line-height: 1.4; }
+  .big-btn:active:not(:disabled) { transform: scale(.99); }
+  .big-btn.quick    { background: linear-gradient(135deg, #ff9a76, #ff6f61); box-shadow: 0 8px 20px rgba(255,111,97,.3); }
+  .big-btn.fallos   { background: linear-gradient(135deg, #a58cf0, #8a6fe0); box-shadow: 0 8px 20px rgba(138,111,224,.3); }
+  .big-btn.marathon { background: linear-gradient(135deg, #43cdb2, #2fae96); box-shadow: 0 8px 20px rgba(47,174,150,.3); }
+  .big-btn:disabled { filter: grayscale(.5); opacity: .55; cursor: default; }
+  .kbd-hint { font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
+  .kbd-hint b { color: #b0755a; }
+
+  .final-wrap { text-align: center; padding: 10px 0; }
+  .final-emoji { font-size: 46px; margin-bottom: 6px; }
+  .final-title { font-family: var(--round); font-size: 24px; margin-bottom: 4px; }
+  .final-rank { font-size: 14.5px; color: var(--ink-soft); margin-bottom: 16px; }
+  .tiles { display: flex; gap: 12px; justify-content: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .tile { background: var(--cream); border: 2px solid var(--line); border-radius: 16px; padding: 12px 22px; }
+  .tile .big { font-family: var(--round); font-size: 22px; }
+  .tile .lbl { font-size: 11.5px; color: var(--ink-soft); }
+  .mistakes-card {
+    background: #fff7f5; border: 2px solid #ffe0da; border-radius: 16px; text-align: left;
+    padding: 12px 16px; font-size: 13.5px; margin-bottom: 16px; max-height: 180px; overflow: auto;
+  }
+  .mistakes-card b { color: var(--coral-dark); }
+  .final-actions { display: flex; flex-direction: column; gap: 10px; }
+  .final-actions button { width: 100%; }
+
+  footer.status-line { margin-top: 14px; display: flex; align-items: center; gap: 8px; justify-content: center; }
+  footer .pill { background: #fff; box-shadow: 0 2px 8px rgba(180,140,100,.1); color: var(--ink-soft); font-weight: 600; text-align: center; }
+
+  /* In-page confirmation: native confirm() is blocked in some embedded contexts. */
+  .modal {
+    position: fixed; inset: 0; z-index: 60; padding: 22px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(74,68,88,.45);
+  }
+  .modal-card {
+    background: #fff; border-radius: 22px; padding: 20px 18px; width: 100%; max-width: 340px;
+    text-align: center; box-shadow: 0 20px 50px rgba(120,80,60,.32);
+  }
+  .modal-card h4 { font-family: var(--round); font-size: 18px; margin-bottom: 6px; }
+  .modal-card p { font-size: 14px; color: var(--ink-soft); line-height: 1.5; margin-bottom: 16px; }
+  .modal-actions { display: flex; flex-direction: column; gap: 9px; }
+  .modal-actions button { width: 100%; }
+
+  /* Keyboard hints are noise on a touch screen; the install tip only makes sense there. */
+  .touch-hint { display: none; font-size: 12px; color: var(--ink-soft); margin-top: 8px; line-height: 1.5; }
+  .touch-hint b { color: #b0755a; }
+  @media (hover: none) {
+    .kbd-hint { display: none; }
+    .touch-hint { display: block; }
+  }
+
+  /* Hover effects only where there is a real pointer (they stick on touch). */
+  @media (hover: hover) and (pointer: fine) {
+    .icon-btn:hover { transform: scale(1.08); border-color: #ffd9c9; }
+    .belt-card:hover { border-color: #ffd9c9; transform: translateY(-1px); }
+    .opt:hover:not(:disabled) {
+      border-color: var(--coral); transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(255,125,107,.18);
+    }
+    .next-btn:hover { transform: translateY(-2px); box-shadow: 0 9px 18px rgba(255,111,97,.4); }
+    .ghost-btn:hover { border-color: var(--coral); transform: translateY(-2px); }
+    .big-btn:hover:not(:disabled) { transform: translateY(-2px) scale(1.01); }
+  }
+
+  /* ---- Desktop / tablet: the original two-column dojo ---- */
+  @media (min-width: 761px) {
+    .app { padding: 22px calc(16px + var(--safe-r)) 30px calc(16px + var(--safe-l)); }
+    body.answered .app { padding-bottom: 30px; }
+    .brand svg { width: 48px; height: 48px; }
+    .brand h1 { font-size: 24px; }
+    .brand .tagline { font-size: 12.5px; }
+    .layout { flex-direction: row; gap: 18px; align-items: flex-start; }
+    aside.belts { order: 0; width: 232px; flex: none; }
+    aside.belts .hint { font-size: 11px; }
+    #belt-list { display: block; }
+    .belt-card { border-radius: 16px; margin-bottom: 8px; padding: 10px 12px; min-height: 0; }
+    .belt-cat { white-space: normal; }
+    main.panel { order: 0; flex: 1; border-radius: 24px; padding: 22px 24px; }
+    .art { aspect-ratio: auto; height: 195px; max-height: none; margin-top: 14px; }
+    .options { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .opt { font-size: 15px; padding: 13px 16px; min-height: 0; }
+    .feedback {
+      flex-direction: row; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 14px; padding: 14px 16px;
+    }
+    .feedback .note { flex: 1; min-width: 220px; font-size: 14px; }
+    .feedback .next-btn { position: static; box-shadow: 0 6px 14px rgba(255,111,97,.35); }
+    .next-btn { padding: 11px 24px; font-size: 15px; }
+    .ghost-btn { padding: 10px 22px; font-size: 14.5px; }
+    .menu-title { font-size: 24px; }
+    .big-btn { padding: 16px 20px; min-height: 0; }
+    .final-actions { flex-direction: row; justify-content: center; flex-wrap: wrap; }
+    .final-actions button, .modal-actions button { width: auto; }
+    .modal-actions { flex-direction: row-reverse; justify-content: center; }
+  }
+
+  /* ---- Phone lying on its side: short viewport, keep Next under the thumb ---- */
+  @media (orientation: landscape) and (max-height: 560px) and (max-width: 1000px) {
+    .art { max-height: 38dvh; min-height: 92px; }
+    .options { grid-template-columns: 1fr 1fr; }
+    .brand .tagline { display: none; }
+    header.top { margin-bottom: 10px; }
+    .q-text { margin: 10px 0; font-size: 16px; }
+    .feedback .next-btn {
+      position: fixed; left: auto; right: calc(16px + var(--safe-r));
+      bottom: calc(14px + var(--safe-b)); padding: 13px 28px;
+      box-shadow: 0 8px 24px rgba(255,111,97,.45);
+    }
+    body.answered .app { padding-bottom: calc(78px + var(--safe-b)); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 60 60" width="48" height="48" aria-hidden="true">
+        <circle cx="30" cy="26" r="16" fill="#ffd9b8" stroke="#d9a06b" stroke-width="2"/>
+        <path d="M15 20 Q30 13 45 20" stroke="#ff7043" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <circle cx="24" cy="26" r="2.2" fill="#5b4a3f"/><circle cx="36" cy="26" r="2.2" fill="#5b4a3f"/>
+        <path d="M25 32 Q30 36 35 32" stroke="#5b4a3f" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <circle cx="18.5" cy="30" r="3" fill="#ffb3ba" opacity=".7"/><circle cx="41.5" cy="30" r="3" fill="#ffb3ba" opacity=".7"/>
+        <rect x="18" y="43" width="24" height="15" rx="7" fill="#fffdf7" stroke="#e2d3bf" stroke-width="2"/>
+        <rect x="18" y="50" width="24" height="5" rx="2.5" fill="#ff8f6b"/>
+      </svg>
+      <div>
+        <h1>Dojo de Karate</h1>
+        <div class="tagline">aprende los términos jugando · ¡osu! 🥋</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="btn-sound" onclick="KDOJO.toggleSound()" title="Sonido">🔊</button>
+      <button class="icon-btn" onclick="KDOJO.resetProgress()" title="Borrar progreso">🗑️</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="belts">
+      <h3>Plan de cinturones</h3>
+      <div class="hint">lo que se aprende en cada grado · toca una cinta para practicarla</div>
+      <div id="belt-list"></div>
+    </aside>
+
+    <main class="panel">
+
+      <!-- Menu screen -->
+      <div id="screen-menu">
+        <div class="menu-title">¡Hola, Ingrid! 👋</div>
+        <div class="menu-sub">Cuatro opciones por pregunta: verde si aciertas, rojo si fallas. Tú marcas el ritmo con el botón <b>Siguiente</b>. Cada cinturón contiene lo que un karateka de ese grado debe saber.</div>
+        <div class="menu-stats" id="menu-stats"></div>
+        <button class="big-btn quick" onclick="KDOJO.startSession('quick')">⚡ Sesión rápida
+          <span class="sub">10 preguntas · prioriza los términos que fallas o no has visto</span></button>
+        <button class="big-btn fallos" id="btn-fallos" onclick="KDOJO.startSession('fallos')">🔁 Reforzar fallos
+          <span class="sub">solo lo que has fallado y aún no dominas</span></button>
+        <button class="big-btn marathon" onclick="KDOJO.startSession('marathon')">🌊 Maratón
+          <span class="sub">los 100 términos, uno por uno</span></button>
+        <div class="kbd-hint">Teclado: responde con <b>1–4</b> o <b>A–D</b> · <b>Enter</b> para siguiente · <b>Esc</b> vuelve al menú</div>
+        <div class="touch-hint">💡 Truco: <b>Compartir → Añadir a pantalla de inicio</b> y el dojo se abre como una app, a pantalla completa.</div>
+      </div>
+
+      <!-- Quiz screen -->
+      <div id="screen-quiz" hidden>
+        <div class="quiz-head">
+          <span class="pill" id="q-pos"></span>
+          <span class="pill streak" id="streak" hidden></span>
+          <span class="spacer"></span>
+          <span class="pill score" id="score">⭐ 0</span>
+        </div>
+        <div class="art" id="art"></div>
+        <div class="q-text"><span id="q-text"></span><span class="chip" id="chip" hidden>🔁 refuerzo</span></div>
+        <div class="options" id="options"></div>
+        <div class="feedback" id="feedback" hidden></div>
+      </div>
+
+      <!-- Final screen -->
+      <div id="screen-final" hidden></div>
+
+    </main>
+  </div>
+
+  <footer class="status-line">
+    <span>🥋</span><span class="pill" id="status">¡Lista para entrenar!</span>
+  </footer>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <h4 id="modal-title">¿Borrar todo el progreso? 🗑️</h4>
+    <p>Se reinician los términos dominados y los fallos pendientes. No se puede deshacer.</p>
+    <div class="modal-actions">
+      <button class="next-btn" onclick="KDOJO.confirmReset()">Sí, empezar de cero</button>
+      <button class="ghost-btn" onclick="KDOJO.closeModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ================= Belt curriculum (grades) =================
+   Each belt holds the knowledge a karateka of that grade must have.
+   The black belt is the final exam: everything mixed. */
+const GRADES = [
+  { id:'blanca',   name:'Cinta Blanca',   kyu:'10.º kyū',      color:'#f7f3ee', desc:'Etiqueta, números y lo básico' },
+  { id:'amarilla', name:'Cinta Amarilla', kyu:'9.º kyū',       color:'#ffd23f', desc:'Primeras posiciones y técnicas' },
+  { id:'naranja',  name:'Cinta Naranja',  kyu:'8.º kyū',       color:'#ff9f45', desc:'Kata, kumite y más técnicas' },
+  { id:'verde',    name:'Cinta Verde',    kyu:'7.º kyū',       color:'#4caf6d', desc:'Mano abierta y el cuerpo' },
+  { id:'azul',     name:'Cinta Azul',     kyu:'6.º–5.º kyū',   color:'#4f86e8', desc:'Técnicas y posiciones avanzadas' },
+  { id:'morada',   name:'Cinta Morada',   kyu:'4.º–3.er kyū',  color:'#9b6dd6', desc:'Aplicación del kata y foco' },
+  { id:'marron',   name:'Cinta Marrón',   kyu:'2.º–1.er kyū',  color:'#8d6e63', desc:'Dominio, distancia y espíritu' },
+  { id:'negra',    name:'Cinta Negra',    kyu:'Dan',           color:'#3a3a3a', desc:'Examen final: todo mezclado', exam:true },
+];
+
+/* Topic categories: used for prompts and to pick plausible wrong options. */
+const CATS = [
+  { id:'num',    name:'Números',             emoji:'🔢' },
+  { id:'dojo',   name:'Etiqueta y Dojo',     emoji:'🙏' },
+  { id:'con',    name:'Conceptos',           emoji:'✨' },
+  { id:'dachi',  name:'Posiciones (Dachi)',  emoji:'🧍' },
+  { id:'uke',    name:'Bloqueos (Uke)',      emoji:'🛡️' },
+  { id:'cuerpo', name:'El Cuerpo',           emoji:'💪' },
+  { id:'tsuki',  name:'Golpes (Tsuki/Uchi)', emoji:'👊' },
+  { id:'geri',   name:'Patadas (Geri)',      emoji:'🦶' },
+];
+const IMG_CATS = new Set(['num','dachi','uke','tsuki','geri']);
+
+/* ================= Cute inline SVG art =================
+   Everything is drawn here: no external images, no licenses, offline. */
+function svgWrap(inner){
+  return '<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">' + inner + '</svg>';
+}
+const MAT = '<rect x="4" y="4" width="192" height="122" rx="16" fill="#fffaf3" stroke="#f6e7d4" stroke-width="2"/>';
+function star(x, y, s, color){
+  return `<path d="M${x} ${y-s} Q${x+s*.25} ${y-s*.25} ${x+s} ${y} Q${x+s*.25} ${y+s*.25} ${x} ${y+s} Q${x-s*.25} ${y+s*.25} ${x-s} ${y} Q${x-s*.25} ${y-s*.25} ${x} ${y-s} Z" fill="${color}"/>`;
+}
+function sakura(cx, cy, r){
+  let s = '';
+  for (let i = 0; i < 5; i++) {
+    const a = i * 2 * Math.PI / 5 - Math.PI / 2;
+    s += `<circle cx="${(cx + Math.cos(a) * r).toFixed(1)}" cy="${(cy + Math.sin(a) * r).toFixed(1)}" r="${(r * .9).toFixed(1)}" fill="#ffc9d6"/>`;
+  }
+  return s + `<circle cx="${cx}" cy="${cy}" r="${(r * .7).toFixed(1)}" fill="#ffe08a"/>`;
+}
+function labelPill(txt){
+  if (!txt) return '';
+  const squeeze = txt.length > 26 ? ' textLength="184" lengthAdjust="spacingAndGlyphs"' : '';
+  return '<rect x="18" y="110" width="164" height="15" rx="7.5" fill="#fdeee2"/>' +
+    `<text x="100" y="120.5" font-size="9.5" text-anchor="middle" fill="#a3785a" font-family="sans-serif"${squeeze}>${txt}</text>`;
+}
+function artKanji(chars, sub){
+  const n = chars.length;
+  const wide = n > 3;
+  const fs = n === 1 ? 52 : n === 2 ? 38 : n === 3 ? 27 : 19;
+  const w = wide ? 152 : 86, x = 100 - w / 2;
+  const squeeze = wide && n > 6 ? ` textLength="${w - 16}" lengthAdjust="spacingAndGlyphs"` : '';
+  return svgWrap(MAT +
+    `<g transform="rotate(-2 100 60)"><rect x="${x}" y="14" width="${w}" height="88" rx="12" fill="#fffdf7" stroke="#ffd0dc" stroke-width="2.5"/>` +
+    `<text x="100" y="${sub ? 52 : 58}" font-size="${fs}" text-anchor="middle" dominant-baseline="central" fill="#4a4458" font-family="'Hiragino Maru Gothic ProN','Hiragino Mincho ProN',serif"${squeeze}>${chars}</text>` +
+    (sub ? `<text x="100" y="88" font-size="17" font-weight="bold" text-anchor="middle" fill="#ff7043" font-family="sans-serif">${sub}</text>` : '') +
+    `</g>` + sakura(x + w - 4, 18, 4.5) + sakura(x + 3, 98, 3.5) + star(30, 30, 4, '#ffe08a') + star(172, 84, 3.5, '#c8ecdf'));
+}
+function foot(x, y, ang, opts){
+  opts = opts || {};
+  const s = opts.scale || 1, ry = (opts.ball ? 8 : 16) * s, rx = 7 * s;
+  let toes = '';
+  [[-3.6, -ry - 3.5, 2], [0, -ry - 5, 2.3], [3.8, -ry - 3.2, 1.9]].forEach(t => {
+    toes += `<circle cx="${t[0]}" cy="${t[1]}" r="${t[2] * s}" fill="#ffcba4" stroke="#d29b6e" stroke-width="1.3"/>`;
+  });
+  return `<g transform="translate(${x} ${y}) rotate(${ang})">` +
+    `<ellipse rx="${rx}" ry="${ry}" fill="#ffcba4" stroke="#d29b6e" stroke-width="2"/>` + toes + '</g>';
+}
+function artFeet(feet, label){
+  return svgWrap(MAT +
+    '<text x="100" y="17" font-size="8.5" text-anchor="middle" fill="#c9b8a5" font-family="sans-serif">▲ FRENTE · VISTA DESDE ARRIBA</text>' +
+    star(22, 26, 3.5, '#ffe08a') + star(178, 30, 3, '#c8ecdf') +
+    feet.map(f => foot(f[0], f[1], f[2], f[3])).join('') + labelPill(label));
+}
+function arrow(x1, y1, qx, qy, x2, y2){
+  const dx = x2 - qx, dy = y2 - qy, L = Math.hypot(dx, dy) || 1;
+  const ux = dx / L, uy = dy / L, px = -uy, py = ux;
+  const bx = x2 - ux * 10, by = y2 - uy * 10;
+  return `<path d="M${x1} ${y1} Q${qx} ${qy} ${x2} ${y2}" fill="none" stroke="#ff7043" stroke-width="4.5" stroke-linecap="round"/>` +
+    `<polygon points="${x2},${y2} ${bx + px * 5},${by + py * 5} ${bx - px * 5},${by - py * 5}" fill="#ff7043"/>` +
+    star(x2 + ux * 9, y2 + uy * 9, 4.5, '#ffc94d');
+}
+function bladeHand(x, y, ang){
+  return `<g transform="translate(${x} ${y}) rotate(${ang})">` +
+    '<rect x="-5" y="-16" width="10" height="26" rx="5" fill="#ffcba4" stroke="#d29b6e" stroke-width="2"/>' +
+    '<line x1="-2" y1="-13" x2="-2" y2="4" stroke="#d29b6e" stroke-width="1.2"/><line x1="2" y1="-13" x2="2" y2="4" stroke="#d29b6e" stroke-width="1.2"/></g>';
+}
+function limb(points, kind, wu, wo){
+  const c = { gi: ['#e2d3bf', '#fffdf7'], skin: ['#d9a06b', '#ffd9b8'], hit: ['#e2532f', '#ff7043'] }[kind];
+  return `<polyline points="${points}" fill="none" stroke="${c[0]}" stroke-width="${wu || 9}" stroke-linecap="round" stroke-linejoin="round"/>` +
+    `<polyline points="${points}" fill="none" stroke="${c[1]}" stroke-width="${wo || 5.5}" stroke-linecap="round" stroke-linejoin="round"/>`;
+}
+function headSide(x, y){
+  return `<circle cx="${x}" cy="${y}" r="13" fill="#ffd9b8" stroke="#d9a06b" stroke-width="2"/>` +
+    `<path d="M${x - 12.5} ${y - 3} Q${x} ${y - 8.5} ${x + 12.5} ${y - 3}" stroke="#ff7043" stroke-width="4" fill="none" stroke-linecap="round"/>` +
+    `<circle cx="${x + 5.5}" cy="${y - 1}" r="1.8" fill="#5b4a3f"/>` +
+    `<path d="M${x + 2} ${y + 5} Q${x + 5} ${y + 7.5} ${x + 8} ${y + 5}" stroke="#5b4a3f" stroke-width="1.5" fill="none" stroke-linecap="round"/>` +
+    `<circle cx="${x + 10}" cy="${y + 2.5}" r="2.3" fill="#ffb3ba" opacity=".7"/>`;
+}
+function chibiFig(o){
+  const hip = o.hip || [92, 68], neck = o.neck || [86, 42], head = o.head || [85, 30];
+  const sKnee = o.standKnee || [80, 88], sFoot = o.standFoot || [74, 108];
+  const armF = o.armF || [104, 52], armB = o.armB || [72, 56];
+  let s = '';
+  if (o.arc) s += `<path d="${o.arc}" fill="none" stroke="#ffab91" stroke-width="2.5" stroke-dasharray="1 7" stroke-linecap="round"/>`;
+  s += limb(`${sFoot} ${sKnee} ${hip}`, 'gi');
+  s += limb(`${hip} ${neck}`, 'gi', 13, 9);
+  const bm = [(hip[0] + neck[0]) / 2, (hip[1] + neck[1]) / 2 + 2];
+  s += `<circle cx="${bm[0]}" cy="${bm[1]}" r="4" fill="${o.belt || '#e57368'}" stroke="rgba(0,0,0,.15)" stroke-width="1.5"/>`;
+  s += limb(`${armF} ${neck}`, 'gi', 7.5, 4.5);
+  s += limb(`${armB} ${neck}`, 'gi', 7.5, 4.5);
+  s += headSide(head[0], head[1]);
+  if (o.red) s += o.red;
+  return svgWrap(MAT + s + labelPill(o.label));
+}
+function kickFig(o){
+  const hip = o.hip || [92, 68];
+  const f = o.kickFoot;
+  o.red = limb(`${hip} ${o.kickKnee} ${f}`, 'hit', 9.5, 6) +
+    `<circle cx="${f[0]}" cy="${f[1]}" r="4" fill="#ff7043"/>` + star(f[0] + 8, f[1] - 8, 5, '#ffc94d');
+  return chibiFig(o);
+}
+function zukiFig(fist, redLeg, belt, label){
+  const hip = [94, 70], frontKnee = [112, 88], frontFoot = [126, 108], backKnee = [76, 90], backFoot = [58, 108];
+  const legPts = redLeg === 'front' ? `${hip} ${frontKnee} ${frontFoot}` : `${hip} ${backKnee} ${backFoot}`;
+  const red = limb(legPts, 'hit', 9.5, 6) +
+    limb(`90,48 108,50 ${fist}`, 'hit', 8.5, 5) +
+    `<circle cx="${fist[0]}" cy="${fist[1]}" r="4.5" fill="#ff7043"/>` + star(fist[0] + 9, fist[1] - 8, 5, '#ffc94d');
+  return chibiFig({
+    hip, neck: [90, 44], head: [89, 32],
+    standKnee: redLeg === 'front' ? backKnee : frontKnee,
+    standFoot: redLeg === 'front' ? backFoot : frontFoot,
+    armF: [80, 58], armB: [90, 64], red, belt, label,
+  });
+}
+function chibiTorso(redParts, label){
+  const fig =
+    '<circle cx="100" cy="36" r="16" fill="#ffd9b8" stroke="#d9a06b" stroke-width="2"/>' +
+    '<path d="M87 29 Q100 23 113 29" stroke="#ff7043" stroke-width="4.5" fill="none" stroke-linecap="round"/>' +
+    '<circle cx="94" cy="34" r="2" fill="#5b4a3f"/><circle cx="106" cy="34" r="2" fill="#5b4a3f"/>' +
+    '<path d="M95 42 Q100 46 105 42" stroke="#5b4a3f" stroke-width="1.8" fill="none" stroke-linecap="round"/>' +
+    '<circle cx="88.5" cy="40" r="2.6" fill="#ffb3ba" opacity=".7"/><circle cx="111.5" cy="40" r="2.6" fill="#ffb3ba" opacity=".7"/>' +
+    '<rect x="84" y="53" width="32" height="34" rx="10" fill="#fffdf7" stroke="#e2d3bf" stroke-width="2.5"/>' +
+    '<path d="M93 54 L100 66 L107 54" stroke="#e2d3bf" stroke-width="2.5" fill="none"/>' +
+    '<rect x="84" y="72" width="32" height="6" rx="3" fill="#ff8f6b"/>' +
+    '<rect x="96" y="70" width="8" height="10" rx="3" fill="#f27a55"/>' +
+    limb('86,58 76,72', 'skin', 8, 5) + limb('114,58 124,72', 'skin', 8, 5);
+  return svgWrap(MAT + fig + redParts + labelPill(label));
+}
+function artNeutral(cat){
+  return svgWrap(MAT +
+    '<circle cx="100" cy="50" r="25" fill="#f3ecff" stroke="#d8c8f5" stroke-width="2.5"/>' +
+    '<text x="100" y="52" font-size="28" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="#9b6dd6" font-family="sans-serif">?</text>' +
+    star(66, 32, 4, '#ffe08a') + star(136, 70, 4, '#c8ecdf') +
+    '<rect x="58" y="86" width="84" height="13" rx="6.5" fill="#efe7fb" stroke="#d8c8f5" stroke-width="1.5"/>' +
+    labelPill(`${cat.emoji} ${cat.name}`));
+}
+
+/* ================= Term bank (100 terms) =================
+   grade = the belt whose curriculum includes this term.
+   In technique drawings, the chibi wears the belt of that grade. */
+const TERMS = [
+  // --- Numbers (white belt: you count aloud from day one) ---
+  { id:'ichi',   grade:'blanca', cat:'num', jp:'Ichi',   kanji:'一', es:'Uno (1)',    note:'Se usa al contar repeticiones en clase.', art: artKanji('一','1') },
+  { id:'ni',     grade:'blanca', cat:'num', jp:'Ni',     kanji:'二', es:'Dos (2)',    note:'', art: artKanji('二','2') },
+  { id:'san',    grade:'blanca', cat:'num', jp:'San',    kanji:'三', es:'Tres (3)',   note:'', art: artKanji('三','3') },
+  { id:'shi',    grade:'blanca', cat:'num', jp:'Shi',    kanji:'四', es:'Cuatro (4)', note:'También se dice «yon».', art: artKanji('四','4') },
+  { id:'go',     grade:'blanca', cat:'num', jp:'Go',     kanji:'五', es:'Cinco (5)',  note:'', art: artKanji('五','5') },
+  { id:'roku',   grade:'blanca', cat:'num', jp:'Roku',   kanji:'六', es:'Seis (6)',   note:'', art: artKanji('六','6') },
+  { id:'shichi', grade:'blanca', cat:'num', jp:'Shichi', kanji:'七', es:'Siete (7)',  note:'También se dice «nana».', art: artKanji('七','7') },
+  { id:'hachi',  grade:'blanca', cat:'num', jp:'Hachi',  kanji:'八', es:'Ocho (8)',   note:'', art: artKanji('八','8') },
+  { id:'ku',     grade:'blanca', cat:'num', jp:'Ku',     kanji:'九', es:'Nueve (9)',  note:'También se dice «kyū».', art: artKanji('九','9') },
+  { id:'ju',     grade:'blanca', cat:'num', jp:'Jū',     kanji:'十', es:'Diez (10)',  note:'', art: artKanji('十','10') },
+
+  // --- Dojo etiquette ---
+  { id:'rei',      grade:'blanca', cat:'dojo', jp:'Rei',      kanji:'礼',   es:'Saludo, reverencia',                 note:'Se hace al entrar y salir del dojo, y hacia el compañero.', art: artKanji('礼') },
+  { id:'dojo',     grade:'blanca', cat:'dojo', jp:'Dōjō',     kanji:'道場', es:'Lugar de entrenamiento',             note:'Literalmente «lugar donde se practica el camino».', art: artKanji('道場') },
+  { id:'sensei',   grade:'blanca', cat:'dojo', jp:'Sensei',   kanji:'先生', es:'Maestro, instructor',                note:'Literalmente «el que nació antes».', art: artKanji('先生') },
+  { id:'sempai',   grade:'verde',  cat:'dojo', jp:'Sempai',   kanji:'先輩', es:'Alumno de mayor grado',              note:'Guía a los kohai (alumnos menores).', art: artKanji('先輩') },
+  { id:'kohai',    grade:'verde',  cat:'dojo', jp:'Kōhai',    kanji:'後輩', es:'Alumno de menor grado',              note:'Aprende de los sempai.', art: artKanji('後輩') },
+  { id:'karategi', grade:'blanca', cat:'dojo', jp:'Karategi', kanji:'空手着', es:'Uniforme de entrenamiento',        note:'A menudo se abrevia «gi».', art: artKanji('空手着') },
+  { id:'obi',      grade:'blanca', cat:'dojo', jp:'Obi',      kanji:'帯',   es:'Cinturón',                           note:'Su color indica el grado.', art: artKanji('帯') },
+  { id:'osu',      grade:'blanca', cat:'dojo', jp:'Osu (Oss)', kanji:'押忍', es:'Saludo de respeto y perseverancia', note:'Expresa espíritu de esfuerzo y respeto.', art: artKanji('押忍') },
+  { id:'kiai',     grade:'amarilla', cat:'dojo', jp:'Kiai',   kanji:'気合', es:'Grito de energía',                   note:'Ki (energía) + ai (unión): concentrar toda la energía en un instante.', art: artKanji('気合') },
+  { id:'seiza',    grade:'blanca', cat:'dojo', jp:'Seiza',    kanji:'正座', es:'Posición de rodillas',               note:'Postura formal para saludar y meditar.', art: artKanji('正座') },
+  { id:'mokuso',   grade:'blanca', cat:'dojo', jp:'Mokusō',   kanji:'黙想', es:'Meditación con ojos cerrados',       note:'Se hace en seiza al inicio y final de la clase.', art: artKanji('黙想') },
+  { id:'hajime',   grade:'blanca', cat:'dojo', jp:'Hajime',   kanji:'始め', es:'¡Comenzar!',                         note:'Orden para iniciar el ejercicio o combate.', art: artKanji('始め') },
+  { id:'yame',     grade:'blanca', cat:'dojo', jp:'Yame',     kanji:'止め', es:'¡Alto! Detenerse',                   note:'Orden para parar de inmediato.', art: artKanji('止め') },
+  { id:'yoi',      grade:'blanca', cat:'dojo', jp:'Yoi',      kanji:'用意', es:'Preparados (posición de atención)',  note:'Precede a «hajime».', art: artKanji('用意') },
+  { id:'mawate',   grade:'naranja', cat:'dojo', jp:'Mawate',  kanji:'回って', es:'Girar, dar la vuelta',             note:'Orden para girar 180° al llegar al final de la sala.', art: artKanji('回って') },
+  { id:'onegai',   grade:'morada', cat:'dojo', jp:'Onegai shimasu', kanji:'お願いします', es:'Por favor (entrena conmigo)', note:'Se dice al comenzar la clase o un ejercicio en pareja.', art: artKanji('お願いします') },
+  { id:'arigato',  grade:'marron', cat:'dojo', jp:'Arigatō gozaimashita', kanji:'ありがとうございました', es:'Muchas gracias (por lo entrenado)', note:'Se dice al final de la clase.', art: artKanji('ありがとうございました') },
+  { id:'kiotsuke', grade:'blanca', cat:'dojo', jp:'Ki o tsuke', kanji:'気を付け', es:'¡Firmes! (posición de atención)', note:'Orden para ponerse firmes antes del saludo.', art: artKanji('気を付け') },
+  { id:'otagai',   grade:'marron', cat:'dojo', jp:'Otagai ni rei', kanji:'お互いに礼', es:'Saludo mutuo entre compañeros', note:'Todos se saludan entre sí al inicio y final de la clase.', art: artKanji('お互いに礼') },
+
+  // --- Concepts ---
+  { id:'karatedo', grade:'blanca', cat:'con', jp:'Karate-dō', kanji:'空手道', es:'El camino de la mano vacía', note:'Kara (vacía) + te (mano) + dō (camino).', art: artKanji('空手道') },
+  { id:'kihon',    grade:'amarilla', cat:'con', jp:'Kihon',   kanji:'基本',   es:'Técnicas fundamentales',     note:'La base: posiciones, golpes y bloqueos repetidos.', art: artKanji('基本') },
+  { id:'kata',     grade:'naranja', cat:'con', jp:'Kata',     kanji:'形',     es:'Forma, secuencia de técnicas', note:'Combate imaginario contra varios oponentes.', art: artKanji('形') },
+  { id:'kumite',   grade:'naranja', cat:'con', jp:'Kumite',   kanji:'組手',   es:'Combate con compañero',      note:'Literalmente «manos que se encuentran».', art: artKanji('組手') },
+  { id:'bunkai',   grade:'morada', cat:'con', jp:'Bunkai',    kanji:'分解',   es:'Aplicación práctica del kata', note:'Analizar el kata para entender cada movimiento.', art: artKanji('分解') },
+  { id:'waza',     grade:'verde',  cat:'con', jp:'Waza',      kanji:'技',     es:'Técnica',                    note:'Aparece en compuestos: dachi-waza, uke-waza…', art: artKanji('技') },
+  { id:'kyu',      grade:'verde',  cat:'con', jp:'Kyū',       kanji:'級',     es:'Grado previo al cinturón negro', note:'Cuenta hacia atrás: del 10.º kyū al 1.er kyū.', art: artKanji('級') },
+  { id:'dan',      grade:'verde',  cat:'con', jp:'Dan',       kanji:'段',     es:'Grado de cinturón negro',    note:'Cuenta hacia adelante: 1.er dan, 2.º dan…', art: artKanji('段') },
+  { id:'jodan',    grade:'amarilla', cat:'con', jp:'Jōdan',   kanji:'上段',   es:'Nivel alto (cara)',          note:'Zona de la cabeza y el cuello.', art: artKanji('上段') },
+  { id:'chudan',   grade:'amarilla', cat:'con', jp:'Chūdan',  kanji:'中段',   es:'Nivel medio (tronco)',       note:'Zona del pecho y el abdomen.', art: artKanji('中段') },
+  { id:'gedan',    grade:'amarilla', cat:'con', jp:'Gedan',   kanji:'下段',   es:'Nivel bajo (de la cintura hacia abajo)', note:'', art: artKanji('下段') },
+  { id:'hidari',   grade:'naranja', cat:'con', jp:'Hidari',   kanji:'左',     es:'Izquierda',                  note:'', art: artKanji('左') },
+  { id:'migi',     grade:'naranja', cat:'con', jp:'Migi',     kanji:'右',     es:'Derecha',                    note:'', art: artKanji('右') },
+  { id:'kime',     grade:'morada', cat:'con', jp:'Kime',      kanji:'決め',   es:'Foco: explosión final de la técnica', note:'Concentrar toda la fuerza en el instante del impacto.', art: artKanji('決め') },
+  { id:'zanshin',  grade:'marron', cat:'con', jp:'Zanshin',   kanji:'残心',   es:'Estado de alerta tras la técnica', note:'Literalmente «la mente que permanece».', art: artKanji('残心') },
+  { id:'hikite',   grade:'morada', cat:'con', jp:'Hikite',    kanji:'引き手', es:'Mano que se recoge a la cadera', note:'La mano contraria «carga» el siguiente golpe.', art: artKanji('引き手') },
+  { id:'maai',     grade:'marron', cat:'con', jp:'Maai',      kanji:'間合い', es:'Distancia de combate',       note:'Controlar la distancia con el oponente.', art: artKanji('間合い') },
+  { id:'kamae',    grade:'azul',   cat:'con', jp:'Kamae',     kanji:'構え',   es:'Posición de guardia',        note:'Preparada para atacar o defender.', art: artKanji('構え') },
+  { id:'kokoro',   grade:'marron', cat:'con', jp:'Kokoro',    kanji:'心',     es:'Corazón, espíritu',          note:'La actitud mental es parte de la técnica.', art: artKanji('心') },
+  { id:'mae',      grade:'blanca', cat:'con', jp:'Mae',       kanji:'前',     es:'Frente, adelante',           note:'Como en mae-geri (patada frontal).', art: artKanji('前') },
+  { id:'yoko',     grade:'blanca', cat:'con', jp:'Yoko',      kanji:'横',     es:'Lado, lateral',              note:'Como en yoko-geri (patada lateral).', art: artKanji('横') },
+  { id:'ushiro',   grade:'blanca', cat:'con', jp:'Ushiro',    kanji:'後ろ',   es:'Atrás, detrás',              note:'Como en ushiro-geri (patada hacia atrás).', art: artKanji('後ろ') },
+  { id:'tsukigen', grade:'blanca', cat:'con', jp:'Tsuki',     kanji:'突き',   es:'Golpe de puño (en general)', note:'Se pronuncia «zuki» en compuestos: oi-zuki, gyaku-zuki.', art: artKanji('突き') },
+  { id:'gerigen',  grade:'blanca', cat:'con', jp:'Geri (Keri)', kanji:'蹴り', es:'Patada (en general)',        note:'Aparece en compuestos: mae-geri, yoko-geri…', art: artKanji('蹴り') },
+  { id:'ukegen',   grade:'blanca', cat:'con', jp:'Uke',       kanji:'受け',   es:'Bloqueo, defensa (en general)', note:'Uke significa «recibir»: age-uke, soto-uke…', art: artKanji('受け') },
+  { id:'dojokun',  grade:'blanca', cat:'con', jp:'Dōjō kun',  kanji:'道場訓', es:'Los principios del dojo',    note:'Reglas de conducta que se recitan al final de la clase.', art: artKanji('道場訓') },
+  { id:'taikyoku', grade:'blanca', cat:'con', jp:'Taikyoku Shodan', kanji:'太極初段', es:'Primer kata de iniciación', note:'Literalmente «causa primera, primer nivel».', art: artKanji('太極初段') },
+  { id:'heian',    grade:'amarilla', cat:'con', jp:'Heian Shodan', kanji:'平安初段', es:'Primer kata de la serie Heian', note:'Heian = «paz y tranquilidad».', art: artKanji('平安初段') },
+
+  // --- Stances ---
+  { id:'zenkutsu', grade:'amarilla', cat:'dachi', jp:'Zenkutsu-dachi', kanji:'前屈立ち', es:'Posición frontal (adelantada)', note:'≈70% del peso en la pierna adelantada. La más usada en Shotokan.', art: artFeet([[120,50,0],[80,92,-25]], '≈70% del peso delante') },
+  { id:'kokutsu',  grade:'naranja', cat:'dachi', jp:'Kōkutsu-dachi',  kanji:'後屈立ち', es:'Posición retrasada',            note:'≈70% del peso en la pierna de atrás; típica con shutō-uke.', art: artFeet([[115,50,0],[78,90,-80]], '≈70% del peso atrás') },
+  { id:'kiba',     grade:'amarilla', cat:'dachi', jp:'Kiba-dachi',    kanji:'騎馬立ち', es:'Posición del jinete',           note:'Como montar a caballo: pies anchos y paralelos, peso 50/50.', art: artFeet([[55,70,0],[145,70,0]], 'pies anchos y paralelos · 50/50') },
+  { id:'shiko',    grade:'azul',   cat:'dachi', jp:'Shiko-dachi',     kanji:'四股立ち', es:'Posición del sumo',             note:'Como kiba-dachi pero con las puntas abiertas 45°.', art: artFeet([[55,70,-40],[145,70,40]], 'ancha, puntas abiertas 45°') },
+  { id:'heisoku',  grade:'amarilla', cat:'dachi', jp:'Heisoku-dachi', kanji:'閉足立ち', es:'Posición con pies juntos',      note:'Pies juntos y paralelos; inicio de varios kata.', art: artFeet([[92,70,0],[108,70,0]], 'pies juntos y paralelos') },
+  { id:'musubi',   grade:'blanca', cat:'dachi', jp:'Musubi-dachi',    kanji:'結び立ち', es:'Talones juntos, puntas afuera', note:'Es la posición desde la que se hace el saludo (rei).', art: artFeet([[90,70,-30],[110,70,30]], 'talones juntos, puntas afuera') },
+  { id:'hachiji',  grade:'blanca', cat:'dachi', jp:'Hachiji-dachi',   kanji:'八字立ち', es:'Posición natural',              note:'Pies al ancho de hombros; posición de «yoi».', art: artFeet([[75,70,-12],[125,70,12]], 'pies al ancho de hombros') },
+  { id:'nekoashi', grade:'azul',   cat:'dachi', jp:'Neko-ashi-dachi', kanji:'猫足立ち', es:'Posición del gato',             note:'≈90% del peso atrás; el pie delantero apoya solo el metatarso.', art: artFeet([[105,52,5,{ball:true,scale:0.85}],[85,92,-35]], 'casi todo el peso atrás 🐱') },
+  { id:'sanchin',  grade:'marron', cat:'dachi', jp:'Sanchin-dachi',   kanji:'三戦立ち', es:'Posición del reloj de arena',   note:'Pies girados hacia dentro; posición de tensión y estabilidad.', art: artFeet([[112,52,-20],[88,88,12]], 'pies girados hacia dentro') },
+
+  // --- Blocks ---
+  { id:'ageuke',     grade:'amarilla', cat:'uke', jp:'Age-uke',     kanji:'上げ受け', es:'Bloqueo ascendente (zona alta)',      note:'Age = subir. Desvía ataques a la cabeza hacia arriba.', art: chibiTorso(arrow(128,82,124,46,88,20), 'defensa ascendente de zona alta') },
+  { id:'gedanbarai', grade:'amarilla', cat:'uke', jp:'Gedan-barai', kanji:'下段払い', es:'Barrido bajo',                        note:'Barre hacia abajo y afuera los ataques a la zona baja.', art: chibiTorso(arrow(94,48,124,64,142,100), 'barre hacia abajo y afuera') },
+  { id:'sotouke',    grade:'naranja', cat:'uke', jp:'Soto-uke',     kanji:'外受け',   es:'Bloqueo de fuera hacia dentro',       note:'El antebrazo viaja desde fuera hacia el centro del cuerpo.', art: chibiTorso(arrow(166,36,150,40,120,56), 'de fuera hacia dentro') },
+  { id:'uchiuke',    grade:'naranja', cat:'uke', jp:'Uchi-uke',     kanji:'内受け',   es:'Bloqueo de dentro hacia fuera',       note:'El antebrazo viaja desde el centro hacia fuera.', art: chibiTorso(arrow(118,74,138,68,160,46), 'de dentro hacia fuera') },
+  { id:'shutouke',   grade:'verde',  cat:'uke', jp:'Shutō-uke',     kanji:'手刀受け', es:'Bloqueo con el canto de la mano',     note:'«Mano de sable»; típico en kōkutsu-dachi.', art: chibiTorso(arrow(160,26,146,40,128,56) + bladeHand(124,60,35), 'con el canto de la mano') },
+  { id:'moroteuke',  grade:'azul',   cat:'uke', jp:'Morote-uke',    kanji:'諸手受け', es:'Bloqueo reforzado (con ambos brazos)', note:'El otro puño apoya el antebrazo que bloquea.', art: chibiTorso(arrow(118,76,140,66,160,50) + '<circle cx="136" cy="66" r="7" fill="none" stroke="#ff7043" stroke-width="4.5"/>', 'el otro puño refuerza el antebrazo') },
+  { id:'jujiuke',    grade:'morada', cat:'uke', jp:'Jūji-uke',      kanji:'十字受け', es:'Bloqueo en cruz (brazos en X)',       note:'Los antebrazos se cruzan formando una X.', art: chibiTorso(limb('80,64 124,30','hit',8.5,5) + limb('120,64 76,30','hit',8.5,5) + star(100,24,5,'#ffc94d'), 'los antebrazos forman una X') },
+
+  // --- Body parts ---
+  { id:'te',     grade:'naranja', cat:'cuerpo', jp:'Te',     kanji:'手',   es:'Mano',                    note:'Kara-te: «mano vacía».', art: artKanji('手') },
+  { id:'ashi',   grade:'naranja', cat:'cuerpo', jp:'Ashi',   kanji:'足',   es:'Pie, pierna',             note:'', art: artKanji('足') },
+  { id:'hiza',   grade:'naranja', cat:'cuerpo', jp:'Hiza',   kanji:'膝',   es:'Rodilla',                 note:'Como en hiza-geri (rodillazo).', art: artKanji('膝') },
+  { id:'hara',   grade:'verde',  cat:'cuerpo', jp:'Hara',    kanji:'腹',   es:'Abdomen, vientre',        note:'Considerado el centro de la energía (ki).', art: artKanji('腹') },
+  { id:'koshi',  grade:'verde',  cat:'cuerpo', jp:'Koshi',   kanji:'腰',   es:'Cadera',                  note:'La potencia de las técnicas nace de la rotación de la cadera.', art: artKanji('腰') },
+  { id:'kubi',   grade:'azul',   cat:'cuerpo', jp:'Kubi',    kanji:'首',   es:'Cuello',                  note:'', art: artKanji('首') },
+  { id:'atama',  grade:'verde',  cat:'cuerpo', jp:'Atama',   kanji:'頭',   es:'Cabeza',                  note:'', art: artKanji('頭') },
+  { id:'kakato', grade:'azul',   cat:'cuerpo', jp:'Kakato',  kanji:'踵',   es:'Talón',                   note:'Superficie de impacto de ushiro-geri.', art: artKanji('踵') },
+  { id:'seiken', grade:'amarilla', cat:'cuerpo', jp:'Seiken', kanji:'正拳', es:'Puño frontal (dos primeros nudillos)', note:'La superficie de golpeo del tsuki.', art: artKanji('正拳') },
+  { id:'sokuto', grade:'azul',   cat:'cuerpo', jp:'Sokutō',  kanji:'足刀', es:'Canto externo del pie',   note:'«Filo del pie»: superficie de yoko-geri.', art: artKanji('足刀') },
+
+  // --- Punches / strikes ---
+  { id:'chokuzuki', grade:'blanca', cat:'tsuki', jp:'Choku-zuki',  kanji:'直突き',   es:'Golpe de puño directo (sin avanzar)', note:'El primer golpe que se aprende, desde hachiji-dachi.', art: chibiTorso(limb('114,58 152,54','hit',8.5,5) + '<circle cx="155" cy="54" r="5" fill="#ff7043"/>' + star(164,46,5,'#ffc94d') + '<line x1="128" y1="44" x2="140" y2="43" stroke="#ffab91" stroke-width="2" stroke-linecap="round"/><line x1="128" y1="64" x2="140" y2="65" stroke="#ffab91" stroke-width="2" stroke-linecap="round"/>', 'golpe directo desde posición natural') },
+  { id:'oizuki',    grade:'amarilla', cat:'tsuki', jp:'Oi-zuki',   kanji:'追い突き', es:'Golpe de puño avanzando',            note:'Puño del MISMO lado que la pierna que avanza.', art: zukiFig([140,47], 'front', '#ffd23f', 'puño y pierna adelantada del mismo lado') },
+  { id:'gyakuzuki', grade:'naranja', cat:'tsuki', jp:'Gyaku-zuki', kanji:'逆突き',   es:'Golpe de puño del lado contrario',   note:'Gyaku = inverso: puño contrario a la pierna adelantada.', art: zukiFig([140,47], 'back', '#ff9f45', 'puño del lado contrario a la pierna') },
+  { id:'kizamizuki', grade:'verde', cat:'tsuki', jp:'Kizami-zuki', kanji:'刻み突き', es:'Golpe corto con el brazo adelantado', note:'Como un jab: rápido, con el brazo que ya está delante.', art: zukiFig([126,46], 'front', '#4caf6d', 'golpe corto con el brazo adelantado') },
+  { id:'uraken',    grade:'verde',  cat:'tsuki', jp:'Uraken-uchi', kanji:'裏拳打ち', es:'Golpe con el dorso del puño',        note:'Sale como un látigo, a menudo hacia la cara.', art: chibiTorso('<path d="M104 22 Q144 22 154 50" fill="none" stroke="#ffab91" stroke-width="2.5" stroke-dasharray="1 7" stroke-linecap="round"/><circle cx="154" cy="50" r="7" fill="none" stroke="#ff7043" stroke-width="4.5"/>' + star(163,42,5,'#ffc94d'), 'látigo con el dorso del puño') },
+  { id:'tettsui',   grade:'azul',   cat:'tsuki', jp:'Tettsui-uchi', kanji:'鉄槌打ち', es:'Golpe de puño de martillo',         note:'Cae con la base del puño, como un martillo.', art: chibiTorso('<path d="M130 20 Q150 30 152 54" fill="none" stroke="#ffab91" stroke-width="2.5" stroke-dasharray="1 7" stroke-linecap="round"/><circle cx="152" cy="54" r="7" fill="none" stroke="#ff7043" stroke-width="4.5"/>' + star(161,47,5,'#ffc94d'), 'cae como un martillo (base del puño)') },
+  { id:'shutouchi', grade:'morada', cat:'tsuki', jp:'Shutō-uchi',  kanji:'手刀打ち', es:'Golpe con el canto de la mano',      note:'El clásico «golpe de karate».', art: chibiTorso('<path d="M156 22 Q166 44 146 60" fill="none" stroke="#ffab91" stroke-width="2.5" stroke-dasharray="1 7" stroke-linecap="round"/>' + bladeHand(142,62,-60) + star(158,66,4.5,'#ffc94d'), 'golpe con el canto externo de la mano') },
+  { id:'empi',      grade:'azul',   cat:'tsuki', jp:'Empi-uchi',   kanji:'猿臂打ち', es:'Golpe con el codo',                  note:'Arma corta y potente para distancias cerradas.', art: chibiTorso(limb('112,56 140,60 126,80','hit',9,5.5) + '<circle cx="140" cy="60" r="4.5" fill="#ff7043"/>' + star(149,53,5,'#ffc94d'), 'impacta la punta del codo') },
+  { id:'nukite',    grade:'marron', cat:'tsuki', jp:'Nukite',      kanji:'貫手',     es:'Mano de lanza (punta de los dedos)', note:'Los dedos extendidos y juntos «atraviesan» el objetivo.', art: chibiTorso(limb('114,54 148,52','hit',8,5) + '<g transform="translate(148 52) rotate(90)"><rect x="-5" y="-16" width="10" height="22" rx="5" fill="#ffcba4" stroke="#d29b6e" stroke-width="2"/><line x1="-2" y1="-13" x2="-2" y2="2" stroke="#d29b6e" stroke-width="1.2"/><line x1="2" y1="-13" x2="2" y2="2" stroke="#d29b6e" stroke-width="1.2"/></g>' + star(178,48,5,'#ffc94d'), 'lanza con la punta de los dedos') },
+
+  // --- Kicks ---
+  { id:'maegeri',     grade:'amarilla', cat:'geri', jp:'Mae-geri',     kanji:'前蹴り',     es:'Patada frontal',        note:'Impacta con la bola del pie (koshi). Mae = frente.', art: kickFig({ belt:'#ffd23f', kickKnee:[108,58], kickFoot:[136,50], arc:'M92 104 Q126 92 136 54', label:'impacta con la bola del pie' }) },
+  { id:'yokogeri',    grade:'naranja', cat:'geri', jp:'Yoko-geri',     kanji:'横蹴り',     es:'Patada lateral',        note:'Impacta con el canto externo del pie (sokutō). Yoko = lado.', art: kickFig({ belt:'#ff9f45', hip:[88,66], neck:[76,42], head:[74,30], standKnee:[80,88], standFoot:[76,108], kickKnee:[108,64], kickFoot:[140,63], arc:'M94 104 Q130 92 140 67', label:'impacta con el canto externo (sokutō)' }) },
+  { id:'mawashigeri', grade:'verde',  cat:'geri', jp:'Mawashi-geri',   kanji:'回し蹴り',   es:'Patada circular',       note:'Mawashi = giro: la pierna describe un arco horizontal.', art: kickFig({ belt:'#4caf6d', kickKnee:[104,50], kickFoot:[134,42], arc:'M92 104 Q152 96 136 46', label:'trayectoria circular' }) },
+  { id:'ushirogeri',  grade:'azul',   cat:'geri', jp:'Ushiro-geri',    kanji:'後ろ蹴り',   es:'Patada hacia atrás',    note:'Ushiro = atrás: se lanza de espaldas al objetivo.', art: kickFig({ belt:'#4f86e8', hip:[86,68], neck:[78,42], head:[76,30], standKnee:[76,88], standFoot:[70,108], kickKnee:[108,72], kickFoot:[138,74], arc:'M92 104 Q120 96 136 76', label:'de espaldas al objetivo' }) },
+  { id:'hizageri',    grade:'azul',   cat:'geri', jp:'Hiza-geri',      kanji:'膝蹴り',     es:'Rodillazo',             note:'Hiza = rodilla; golpe de distancia corta.', art: kickFig({ belt:'#4f86e8', kickKnee:[108,58], kickFoot:[100,82], arc:'M100 100 Q114 78 108 60', label:'golpe con la rodilla' }) },
+  { id:'mikazuki',    grade:'morada', cat:'geri', jp:'Mikazuki-geri',  kanji:'三日月蹴り', es:'Patada en media luna',  note:'Mikazuki = luna creciente: arco de fuera hacia dentro.', art: kickFig({ belt:'#9b6dd6', kickKnee:[102,64], kickFoot:[98,44], arc:'M124 100 Q146 56 100 44', label:'trayectoria en media luna 🌙' }) },
+  { id:'fumikomi',    grade:'morada', cat:'geri', jp:'Fumikomi',       kanji:'踏み込み',   es:'Pisotón descendente',   note:'Cae con fuerza, típicamente sobre la rodilla o el empeine.', art: kickFig({ belt:'#9b6dd6', kickKnee:[104,58], kickFoot:[110,84], arc:'M104 50 Q120 62 112 82', label:'pisotón que cae con fuerza' }) },
+  { id:'tobigeri',    grade:'marron', cat:'geri', jp:'Tobi-geri',      kanji:'飛び蹴り',   es:'Patada en salto',       note:'Tobi = saltar: se ejecuta en el aire.', art: kickFig({ belt:'#8d6e63', standKnee:[80,84], standFoot:[66,92], kickKnee:[106,56], kickFoot:[136,48], arc:'M90 106 Q120 80 136 52', label:'¡en el aire! ambos pies despegan' }) },
+];
+
+/* ================= Persistence ================= */
+const STORE_KEY = 'karate-dojo-v1';
+let stats = { sound: true, terms: {} };
+function loadStats(){
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) { const p = JSON.parse(raw); if (p && p.terms) stats = p; }
+  } catch (e) { /* private mode or blocked storage: play without persistence */ }
+}
+function saveStats(){
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(stats)); } catch (e) {}
+}
+function statFor(id){ return stats.terms[id] || { s:0, w:0, k:0 }; }
+
+/* ================= Session building ================= */
+function shuffle(a){
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function weightOf(t){
+  const s = stats.terms[t.id];
+  if (!s || !s.s) return 3;                       // unseen: high priority
+  const wrongRate = s.w / s.s;
+  return Math.max(0.3, 1 + 3 * wrongRate - 0.3 * Math.min(s.k, 3));
+}
+function weightedSample(terms, n){
+  const pool = terms.map(t => ({ t, w: weightOf(t) }));
+  const out = [];
+  while (out.length < n && pool.length) {
+    let r = Math.random() * pool.reduce((sum, p) => sum + p.w, 0);
+    let k = 0;
+    while (k < pool.length - 1 && r > pool[k].w) { r -= pool[k].w; k++; }
+    out.push(pool[k].t);
+    pool.splice(k, 1);
+  }
+  return out;
+}
+function pendingFails(){
+  return TERMS.filter(t => { const s = statFor(t.id); return s.w > 0 && s.k < 2; });
+}
+function buildSession(mode, gradeId){
+  if (mode === 'quick')    return weightedSample(TERMS, 10);
+  if (mode === 'belt') {
+    const g = GRADES.find(x => x.id === gradeId);
+    if (g && g.exam) return weightedSample(TERMS, 15);   // black belt: final exam over everything
+    const pool = TERMS.filter(t => t.grade === gradeId);
+    return weightedSample(pool, Math.min(12, pool.length));
+  }
+  if (mode === 'marathon') return shuffle(TERMS.slice());
+  if (mode === 'fallos')   { const c = pendingFails(); return weightedSample(c, Math.min(12, c.length)); }
+  if (mode === 'mistakes') {
+    const ids = new Set(state.lastMistakes || []);
+    return shuffle(TERMS.filter(t => ids.has(t.id)));
+  }
+  return weightedSample(TERMS, 10);
+}
+const IMG_PROMPTS = {
+  num:   '¿Cómo se dice en japonés el número de la imagen?',
+  dachi: '¿Qué posición (dachi) muestra la imagen?',
+  uke:   '¿Qué bloqueo muestra la imagen?',
+  tsuki: '¿Qué golpe muestra la imagen?',
+  geri:  '¿Qué patada muestra la imagen?',
+};
+function makeQuestion(term){
+  const cat = CATS.find(c => c.id === term.cat);
+  const imgOK = IMG_CATS.has(term.cat) && !!term.art;
+  const r = Math.random();
+  const format = imgOK
+    ? (r < 0.45 ? 'img' : r < 0.75 ? 'jp2es' : 'es2jp')
+    : (r < 0.55 ? 'jp2es' : 'es2jp');
+  const key = format === 'jp2es' ? 'es' : 'jp';
+  const opts = [term[key]];
+  for (const c of shuffle(TERMS.filter(t => t.cat === term.cat && t.id !== term.id))) {
+    if (opts.length >= 4) break;
+    if (!opts.includes(c[key])) opts.push(c[key]);
+  }
+  for (const c of shuffle(TERMS.filter(t => t.id !== term.id))) {  // fallback for tiny pools
+    if (opts.length >= 4) break;
+    if (!opts.includes(c[key])) opts.push(c[key]);
+  }
+  const options = shuffle(opts.slice());
+  const prompt = format === 'img' ? IMG_PROMPTS[term.cat]
+    : format === 'jp2es' ? `¿Qué significa «${term.jp}»?`
+    : `¿Cómo se dice en japonés: «${term.es}»?`;
+  return { term, cat, format, prompt, options, correct: options.indexOf(term[key]) };
+}
+
+/* ================= Sound (soft WebAudio tones) ================= */
+let audioCtx = null;
+function tone(freq, start, dur, type){
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.05, audioCtx.currentTime + start);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + start + dur);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(audioCtx.currentTime + start); o.stop(audioCtx.currentTime + start + dur);
+}
+function beep(ok){
+  if (!stats.sound) return;
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    if (!audioCtx) audioCtx = new AC();
+    if (audioCtx.state === 'suspended') audioCtx.resume();   // iOS starts it suspended
+    if (ok) { tone(523.25, 0, 0.12, 'sine'); tone(659.25, 0.1, 0.12, 'sine'); tone(783.99, 0.2, 0.2, 'sine'); }
+    else    { tone(233, 0, 0.18, 'triangle'); tone(196, 0.16, 0.26, 'triangle'); }
+  } catch (e) {}
+}
+
+/* ================= Game state & rendering ================= */
+const state = {
+  screen: 'menu', session: [], idx: 0, score: 0, streak: 0,
+  answering: false, mistakes: [], lastMistakes: [], mode: 'quick',
+};
+const el = {};
+function cacheEls(){
+  ['belt-list','screen-menu','screen-quiz','screen-final','menu-stats','btn-fallos',
+   'q-pos','streak','score','art','q-text','chip','options','feedback','status','btn-sound','modal']
+    .forEach(id => { el[id.replace(/-(\w)/g, (m, c) => c.toUpperCase())] = document.getElementById(id); });
+}
+function setStatus(msg){ el.status.textContent = msg; }
+/* Narrow screens, but also short ones — a phone lying on its side. */
+const isPhone = () => window.matchMedia('(max-width: 760px), (max-height: 560px)').matches;
+/* While feedback is on screen the Next button floats over the page on phones:
+   this class reserves room for it so nothing ends up hidden underneath. */
+function setAnswered(on){ document.body.classList.toggle('answered', !!on); }
+function showScreen(name){
+  state.screen = name;
+  el.screenMenu.hidden  = name !== 'menu';
+  el.screenQuiz.hidden  = name !== 'quiz';
+  el.screenFinal.hidden = name !== 'final';
+}
+function renderSidebar(activeGradeId){
+  el.beltList.innerHTML = '';
+  for (const g of GRADES) {
+    const terms = g.exam ? TERMS : TERMS.filter(t => t.grade === g.id);
+    const mastered = terms.filter(t => statFor(t.id).k >= 2).length;
+    const pct = Math.round(100 * mastered / terms.length);
+    const row = document.createElement('div');
+    row.className = 'belt-card' + (g.id === activeGradeId ? ' active' : '');
+    row.innerHTML =
+      `<span class="belt-dot" style="background:${g.color}"></span>` +
+      `<span class="belt-body"><span class="belt-name">${g.name}</span>` +
+      `<div class="belt-cat">${g.kyu} · ${g.desc}</div>` +
+      `<span class="belt-bar"><i style="width:${pct}%"></i></span></span>` +
+      `<span class="belt-frac">${mastered}/${terms.length}</span>`;
+    row.onclick = () => startSession('belt', g.id);
+    el.beltList.appendChild(row);
+  }
+}
+function updateMenu(){
+  const mastered = TERMS.filter(t => statFor(t.id).k >= 2).length;
+  const fails = pendingFails().length;
+  el.menuStats.innerHTML =
+    `🏆 Términos dominados: <b>${mastered} / ${TERMS.length}</b> <span style="color:var(--ink-soft)">(dominado = 2 aciertos seguidos)</span><br>` +
+    `🔁 Fallos pendientes de reforzar: <b>${fails}</b>`;
+  el.btnFallos.disabled = fails === 0;
+  el.btnFallos.innerHTML = fails === 0
+    ? '🔁 Reforzar fallos <span class="sub">¡no tienes ninguno pendiente! 🎉</span>'
+    : `🔁 Reforzar fallos <span class="sub">${fails} términos fallados que aún no dominas</span>`;
+}
+function updateHUD(){
+  el.score.textContent = '⭐ ' + state.score;
+  el.streak.hidden = state.streak < 2;
+  el.streak.textContent = `🔥 racha ×${state.streak}`;
+  el.qPos.textContent = `Pregunta ${state.idx + 1} de ${state.session.length}`;
+}
+function startSession(mode, gradeId){
+  const terms = buildSession(mode, gradeId);
+  if (!terms.length) { setStatus('No hay términos para ese modo todavía.'); return; }
+  state.mode = mode; state.session = terms.map(makeQuestion);
+  state.idx = 0; state.score = 0; state.streak = 0; state.mistakes = [];
+  showScreen('quiz');
+  renderQuestion();
+}
+function renderQuestion(){
+  const q = state.session[state.idx];
+  state.answering = true;
+  setAnswered(false);
+  if (isPhone()) window.scrollTo({ top: 0, behavior: 'smooth' });   // start each question at the top
+  renderSidebar(q.term.grade);
+  updateHUD();
+  el.art.innerHTML = q.format === 'img' ? q.term.art : artNeutral(q.cat);
+  el.qText.textContent = q.prompt;
+  el.chip.hidden = !(statFor(q.term.id).w > 0);
+  el.feedback.hidden = true; el.feedback.innerHTML = '';
+  el.options.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.textContent = `${String.fromCharCode(65 + i)})  ${opt}`;
+    btn.onclick = () => answer(i);
+    el.options.appendChild(btn);
+  });
+  const g = GRADES.find(x => x.id === q.term.grade);
+  setStatus(`🥋 ${g.name} · ${q.cat.emoji} ${q.cat.name}`);
+}
+function answer(i){
+  if (!state.answering) return;
+  state.answering = false;
+  const q = state.session[state.idx];
+  const ok = i === q.correct;
+  const buttons = el.options.querySelectorAll('button');
+  buttons.forEach(b => { b.disabled = true; });
+  buttons[q.correct].classList.add('correct');
+  if (!ok) buttons[i].classList.add('wrong');
+
+  const s = statFor(q.term.id);
+  s.s++; if (ok) { s.k++; } else { s.w++; s.k = 0; }
+  stats.terms[q.term.id] = s; saveStats();
+
+  if (ok) {
+    state.streak++;
+    const gained = 100 + 25 * Math.min(state.streak - 1, 4);
+    state.score += gained;
+    setStatus(`¡Bien hecho! +${gained} puntos ✨`);
+  } else {
+    state.streak = 0;
+    state.mistakes.push(q.term);
+    setStatus(`Casi… la respuesta era: ${q.options[q.correct]}`);
+  }
+  beep(ok);
+  updateHUD();
+  renderSidebar(q.term.grade);
+
+  // Show the real illustration + full term info; the player advances at their own pace.
+  const t = q.term;
+  el.art.innerHTML = t.art || artNeutral(q.cat);
+  el.feedback.className = 'feedback ' + (ok ? 'ok' : 'bad');
+  el.feedback.hidden = false;
+  const last = state.idx === state.session.length - 1;
+  el.feedback.innerHTML =
+    `<span class="note">${ok ? '💚' : '💔'} <b>${t.jp}</b>` +
+    (t.kanji ? ` <span class="kanji">${t.kanji}</span>` : '') +
+    ` — ${t.es}.` + (t.note ? ` <i>${t.note}</i>` : '') + '</span>' +
+    `<button class="next-btn" onclick="KDOJO.advance()">${last ? 'Ver resultado 🎉' : 'Siguiente →'}</button>`;
+  setAnswered(true);
+  requestAnimationFrame(() => el.feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+}
+function advance(){
+  if (state.screen !== 'quiz' || state.answering) return;
+  state.idx++;
+  if (state.idx < state.session.length) renderQuestion();
+  else endSession();
+}
+function endSession(){
+  const total = state.session.length;
+  const wrong = state.mistakes.length;
+  const right = total - wrong;
+  const pct = Math.round(100 * right / total);
+  state.lastMistakes = state.mistakes.map(t => t.id);
+  const emoji = pct === 100 ? '🏆' : pct >= 80 ? '🌟' : pct >= 60 ? '💪' : '🌱';
+  const rank = pct === 100 ? '¡Perfecto! Espíritu de Sensei'
+    : pct >= 80 ? 'Nivel Sempai: muy sólido'
+    : pct >= 60 ? 'Nivel Kōhai: buen progreso'
+    : 'Semillita de karateka: la constancia es el camino';
+  let html = '<div class="final-wrap">' +
+    `<div class="final-emoji">${emoji}</div>` +
+    '<div class="final-title">¡Entrenamiento completado!</div>' +
+    `<div class="final-rank">${rank}</div>` +
+    '<div class="tiles">' +
+    `<div class="tile"><div class="big">${right}/${total}</div><div class="lbl">aciertos (${pct}%)</div></div>` +
+    `<div class="tile"><div class="big">⭐ ${state.score}</div><div class="lbl">puntos</div></div></div>`;
+  if (wrong) {
+    html += '<div class="mistakes-card"><b>Términos a reforzar:</b><br>' +
+      state.mistakes.map(t => `<b>${t.jp}</b> — ${t.es}`).join('<br>') + '</div>';
+  }
+  html += '<div class="final-actions">';
+  if (wrong) html += `<button class="next-btn" onclick="KDOJO.startSession('mistakes')">🔁 Repetir estos fallos (${wrong})</button>`;
+  html += '<button class="ghost-btn" onclick="KDOJO.startSession(\'quick\')">⚡ Nueva sesión</button>' +
+    '<button class="ghost-btn" onclick="KDOJO.goMenu()">🏠 Menú</button></div></div>';
+  el.screenFinal.innerHTML = html;
+  setAnswered(false);
+  showScreen('final');
+  renderSidebar(null);
+  if (isPhone()) window.scrollTo({ top: 0, behavior: 'smooth' });
+  setStatus('Fin de la sesión. ¡Osu! 🥋');
+}
+function goMenu(){
+  setAnswered(false);
+  showScreen('menu');
+  renderSidebar(null);
+  updateMenu();
+  if (isPhone()) window.scrollTo({ top: 0, behavior: 'smooth' });
+  setStatus('¡Lista para entrenar!');
+}
+function toggleSound(){
+  stats.sound = !stats.sound; saveStats();
+  el.btnSound.textContent = stats.sound ? '🔊' : '🔇';
+  setStatus(stats.sound ? 'Sonido activado' : 'Sonido desactivado');
+}
+function resetProgress(){ el.modal.hidden = false; }
+function closeModal(){ el.modal.hidden = true; }
+function confirmReset(){
+  closeModal();
+  stats.terms = {}; saveStats();
+  renderSidebar(null); updateMenu();
+  setStatus('Progreso borrado. Empezamos de cero: ¡osu!');
+}
+function onKey(e){
+  if (!el.modal.hidden) { if (e.key === 'Escape') closeModal(); return; }
+  if (state.screen === 'quiz') {
+    if (e.key === 'Escape') { goMenu(); return; }
+    if (state.answering) {
+      let idx = -1;
+      if (e.key >= '1' && e.key <= '4') idx = e.key.charCodeAt(0) - 49;
+      const low = e.key.toLowerCase();
+      if (low.length === 1 && low >= 'a' && low <= 'd') idx = low.charCodeAt(0) - 97;
+      if (idx >= 0 && idx < 4) answer(idx);
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault(); advance();
+    }
+  }
+}
+
+/* Home-screen icon for iOS: painted here so the file stays a single offline document. */
+function installTouchIcon(){
+  try {
+    const c = document.createElement('canvas');
+    c.width = c.height = 180;
+    const x = c.getContext('2d');
+    x.fillStyle = '#fff7ee'; x.fillRect(0, 0, 180, 180);
+    x.font = '120px -apple-system, "Segoe UI Emoji", sans-serif';
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillText('🥋', 90, 98);
+    const link = document.createElement('link');
+    link.rel = 'apple-touch-icon';
+    link.href = c.toDataURL('image/png');
+    document.head.appendChild(link);
+  } catch (e) { /* canvas blocked: iOS falls back to a screenshot */ }
+}
+
+/* ================= Init ================= */
+loadStats();
+cacheEls();
+renderSidebar(null);
+updateMenu();
+showScreen('menu');
+el.btnSound.textContent = stats.sound ? '🔊' : '🔇';
+document.addEventListener('keydown', onKey);
+el.modal.addEventListener('click', e => { if (e.target === el.modal) closeModal(); });
+installTouchIcon();
+
+window.KDOJO = {
+  state, TERMS, CATS, GRADES, buildSession, makeQuestion,
+  startSession, answer, advance, goMenu, toggleSound,
+  resetProgress, confirmReset, closeModal,
+};
+</script>
+</body>
+</html>
